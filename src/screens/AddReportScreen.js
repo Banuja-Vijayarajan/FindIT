@@ -145,7 +145,7 @@ export default function AddReportScreen({ route, navigation }) {
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.contentContainer}
     >
-      <Text style={[styles.heading, theme.typography.h1, { color: theme.textPrimary }]}>
+      <Text style={[styles.heading, theme.typography.h1, { color: theme.textHeading }]}>
         Report {type} Item
       </Text>
 

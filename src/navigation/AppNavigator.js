@@ -18,7 +18,7 @@ const Stack = createNativeStackNavigator();
 
 // Header Right Action Icons at the edge of the navigation bar
 function NavBarEdgeActions({ navigation }) {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, theme, toggleTheme } = useTheme();
 
   return (
     <View style={styles.edgeContainer}>
@@ -32,7 +32,7 @@ function NavBarEdgeActions({ navigation }) {
         <Ionicons
           name={isDark ? 'sunny' : 'moon'}
           size={21}
-          color="#FFFFFF"
+          color={theme.textHeading}
         />
       </TouchableOpacity>
 
@@ -46,7 +46,7 @@ function NavBarEdgeActions({ navigation }) {
         <Ionicons
           name="person-circle-outline"
           size={26}
-          color="#FFFFFF"
+          color={theme.textHeading}
         />
       </TouchableOpacity>
     </View>
@@ -61,11 +61,12 @@ function MainTabs() {
     <Tab.Navigator
       initialRouteName="HomeTab"
       screenOptions={({ navigation }) => ({
-        headerStyle: { backgroundColor: theme.primary, height: 76 },
-        headerTintColor: '#FFFFFF',
+        headerStyle: { backgroundColor: theme.clayCardBg, height: 76 },
+        headerTintColor: theme.textHeading,
         headerTitleStyle: {
           fontFamily: theme.typography.subtitle.fontFamily,
           fontWeight: '600',
+          color: theme.textHeading,
         },
         headerRight: () => <NavBarEdgeActions navigation={navigation} />,
         tabBarStyle: {
@@ -88,13 +89,13 @@ function MainTabs() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, height: 64 }}>
               <Image
                 source={require('../../assets/FindIt_logo_mark.png')}
-                style={{ width: 56, height: 56, tintColor: '#FFFFFF' }}
+                style={{ width: 56, height: 56, tintColor: theme.textHeading }}
                 resizeMode="contain"
               />
               <Text
                 style={[
                   theme.typography.appTitle,
-                  { color: '#FFFFFF', fontSize: 22, fontWeight: '800' },
+                  { color: theme.textHeading, fontSize: 22, fontWeight: '800' },
                 ]}
               >
                 FindIt
@@ -167,11 +168,12 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={({ navigation }) => ({
-          headerStyle: { backgroundColor: theme.primary },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: theme.clayCardBg },
+          headerTintColor: theme.textHeading,
           headerTitleStyle: {
             fontFamily: theme.typography.subtitle.fontFamily,
             fontWeight: '600',
+            color: theme.textHeading,
           },
           contentStyle: { backgroundColor: theme.background },
           headerRight: () => <NavBarEdgeActions navigation={navigation} />,

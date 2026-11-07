@@ -153,7 +153,7 @@ export default function ItemDetailsScreen({ route, navigation }) {
           </View>
 
           {/* Title */}
-          <Text style={[styles.title, { color: theme.textPrimary }]}>{item.title}</Text>
+          <Text style={[styles.title, theme.typography.h1, { color: theme.textHeading }]}>{item.title}</Text>
 
           {/* Location */}
           <View style={[styles.infoRow, { borderColor: theme.border }]}>

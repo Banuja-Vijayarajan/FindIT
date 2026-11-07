@@ -93,7 +93,7 @@ export default function BrowseScreen({ route, navigation }) {
       </View>
 
       <View style={styles.categoryFilters}>
-        <Text style={[styles.categoryFilterLabel, { color: theme.textSecondary }]}>CATEGORY</Text>
+        <Text style={[styles.categoryFilterLabel, { color: theme.textHeading }]}>CATEGORY</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -169,7 +169,7 @@ export default function BrowseScreen({ route, navigation }) {
         ListEmptyComponent={
           <View style={[styles.emptyContainer, clayCard]}>
             <Ionicons name="search-outline" size={42} color={theme.textSecondary} style={{ marginBottom: 8 }} />
-            <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>No matching items found</Text>
+            <Text style={[styles.emptyTitle, { color: theme.textHeading }]}>No matching items found</Text>
             <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
               Try adjusting your search terms or filter.
             </Text>

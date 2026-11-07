@@ -75,7 +75,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={[styles.greetingSub, theme.typography.subtitle, { color: theme.textSecondary }]}>
           Welcome back,
         </Text>
-        <Text style={[styles.greetingName, theme.typography.h1, { color: theme.textPrimary }]}>
+        <Text style={[styles.greetingName, theme.typography.h1, { color: theme.textHeading }]}>
           {user.name || 'Friend'} 
         </Text>
       </View>
@@ -94,7 +94,7 @@ export default function HomeScreen({ navigation }) {
         </Text>
 
         <TouchableOpacity
-          style={[styles.searchBarClay, getClayPillStyle(isDark, '#FFFFFF')]}
+          style={[styles.searchBarClay, getClayPillStyle(isDark, theme.clayCardBg)]}
           activeOpacity={0.85}
           onPress={() => navigation.navigate('Browse')}
         >
@@ -122,7 +122,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* 4. Clay Quick Action Cards */}
-      <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textPrimary }]}>Quick Actions</Text>
+      <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textHeading }]}>Quick Actions</Text>
       <View style={styles.actionGrid}>
         {/* Report Lost Clay Card */}
         <TouchableOpacity
@@ -164,7 +164,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* 5. Clay Category Pills Row */}
-      <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textPrimary }]}>Categories</Text>
+      <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textHeading }]}>Categories</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -185,7 +185,7 @@ export default function HomeScreen({ navigation }) {
 
       {/* 6. Recent Activity Section with Clay Cards */}
       <View style={styles.sectionHeaderRow}>
-        <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textPrimary }]}>Recent Activity</Text>
+        <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textHeading }]}>Recent Activity</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Browse')}>
           <Text style={[styles.seeAllText, { color: theme.primary }]}>View All ({totalCount}) →</Text>
         </TouchableOpacity>
