@@ -42,8 +42,16 @@ export default function MyReportsScreen({ navigation }) {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            deleteItem(id);
-            loadReports();
+            try {
+              if (!deleteItem(id)) {
+                Alert.alert('Delete Failed', 'This report could not be deleted. Please try again.');
+                return;
+              }
+              loadReports();
+            } catch (error) {
+              console.log('Error deleting report:', error);
+              Alert.alert('Delete Failed', 'This report could not be deleted. Please try again.');
+            }
           },
         },
       ]
@@ -78,8 +86,10 @@ export default function MyReportsScreen({ navigation }) {
         }
         renderItem={({ item }) => {
           const isLost = item.type?.toLowerCase() === 'lost';
+          const status = String(item.status || 'active').toLowerCase();
+          const isResolved = status === 'resolved' || status === 'claimed';
           return (
-            <View style={[styles.card, clayCard]}>
+            <View style={[styles.card, clayCard, isResolved && styles.resolvedCard]}>
               <TouchableOpacity
                 style={styles.cardContent}
                 activeOpacity={0.75}
@@ -105,14 +115,14 @@ export default function MyReportsScreen({ navigation }) {
                     </Text>
 
                     {/* Clay Status Badge */}
-                    <View style={getClayBadgeStyle(isDark, item.type)}>
+                    <View style={getClayBadgeStyle(isDark, isResolved ? 'Found' : item.type)}>
                       <Text
                         style={[
                           styles.badgeText,
-                          { color: isLost ? theme.accent : theme.success },
+                          { color: isResolved || !isLost ? theme.success : theme.accent },
                         ]}
                       >
-                        {isLost ? 'LOST' : 'FOUND'}
+                        {isResolved ? 'CLAIMED' : isLost ? 'LOST' : 'FOUND'}
                       </Text>
                     </View>
                   </View>
@@ -158,6 +168,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
     padding: 14,
+  },
+  resolvedCard: {
+    opacity: 0.78,
   },
   cardContent: {
     flex: 1,

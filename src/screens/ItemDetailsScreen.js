@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -13,11 +14,14 @@ import {
   getClayCardStyle,
   getClayBadgeStyle,
   getClayPillStyle,
+  getClayButtonStyle,
 } from '../styles/theme';
+import { deleteItem, markItemAsClaimed } from '../database/db';
 
 export default function ItemDetailsScreen({ route, navigation }) {
   const { theme, isDark } = useTheme();
   const item = route.params?.item;
+  const [status, setStatus] = useState(item?.status || 'active');
 
   const clayCard = getClayCardStyle(isDark);
 
@@ -39,6 +43,63 @@ export default function ItemDetailsScreen({ route, navigation }) {
   }
 
   const isLost = item.type?.toLowerCase() === 'lost';
+  const normalizedStatus = String(status).toLowerCase();
+  const isClaimed = normalizedStatus === 'claimed';
+  const isResolved = isClaimed || normalizedStatus === 'resolved';
+
+  const handleResolve = () => {
+    Alert.alert(
+      'Mark as Claimed / Returned',
+      'Has this item been successfully returned to its owner?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes, Mark Resolved',
+          onPress: () => {
+            try {
+              if (!markItemAsClaimed(item.id)) {
+                Alert.alert('Update Failed', 'This item could not be marked as resolved. Please try again.');
+                return;
+              }
+              setStatus('claimed');
+              Alert.alert('Item Claimed / Returned', 'This report has been marked as claimed / returned.', [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            } catch (error) {
+              console.log('Error resolving item:', error);
+              Alert.alert('Update Failed', 'This item could not be marked as resolved. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Report',
+      `Are you sure you want to permanently delete "${item.title || 'this item'}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              if (!deleteItem(item.id)) {
+                Alert.alert('Delete Failed', 'This report could not be deleted. Please try again.');
+                return;
+              }
+              navigation.goBack();
+            } catch (error) {
+              console.log('Error deleting item:', error);
+              Alert.alert('Delete Failed', 'This report could not be deleted. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ScrollView
@@ -55,23 +116,32 @@ export default function ItemDetailsScreen({ route, navigation }) {
         <View style={styles.cardPadding}>
           {/* Status Badge & Date */}
           <View style={styles.badgeRow}>
-            <View style={getClayBadgeStyle(isDark, item.type)}>
-              <View style={styles.badgeContent}>
-                <Ionicons
-                  name={isLost ? 'search' : 'gift'}
-                  size={14}
-                  color={isLost ? theme.accent : theme.success}
-                  style={{ marginRight: 4 }}
-                />
-                <Text
-                  style={[
-                    styles.badgeText,
-                    { color: isLost ? theme.accent : theme.success },
-                  ]}
-                >
-                  {isLost ? 'LOST ITEM' : 'FOUND ITEM'}
-                </Text>
+            <View style={styles.badgeGroup}>
+              <View style={getClayBadgeStyle(isDark, item.type)}>
+                <View style={styles.badgeContent}>
+                  <Ionicons
+                    name={isLost ? 'search' : 'gift'}
+                    size={14}
+                    color={isLost ? theme.accent : theme.success}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      { color: isLost ? theme.accent : theme.success },
+                    ]}
+                  >
+                    {isLost ? 'LOST ITEM' : 'FOUND ITEM'}
+                  </Text>
+                </View>
               </View>
+              {isResolved ? (
+                <View style={getClayBadgeStyle(isDark, 'Found')}>
+                  <Text style={[styles.badgeText, { color: theme.success }]}>
+                    {isClaimed ? 'CLAIMED' : 'RESOLVED'}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             {item.date ? (
@@ -125,6 +195,33 @@ export default function ItemDetailsScreen({ route, navigation }) {
         </View>
       </View>
 
+      {isResolved ? (
+        <View style={[styles.resolvedNotice, { backgroundColor: theme.successBg }]}>
+          <Ionicons name="checkmark-circle" size={20} color={theme.success} />
+          <Text style={[styles.resolvedNoticeText, { color: theme.success }]}>This item has been resolved.</Text>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[styles.actionButton, getClayButtonStyle(isDark, theme.primary)]}
+          onPress={handleResolve}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+        >
+          <Ionicons name="checkmark-done-outline" size={20} color="#FFFFFF" style={styles.actionIcon} />
+          <Text style={styles.primaryActionText}>Mark as Claimed / Returned</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={[styles.deleteButton, getClayPillStyle(isDark, theme.dangerBg)]}
+        onPress={handleDelete}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+      >
+        <Ionicons name="trash-outline" size={18} color={theme.danger} style={styles.actionIcon} />
+        <Text style={[styles.deleteActionText, { color: theme.danger }]}>Delete Report</Text>
+      </TouchableOpacity>
+
       {/* Clay Back Button */}
       <TouchableOpacity
         style={[styles.backToBrowseBtn, getClayPillStyle(isDark, theme.surface)]}
@@ -177,6 +274,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 14,
+  },
+  badgeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   badgeContent: {
     flexDirection: 'row',
@@ -266,5 +368,44 @@ const styles = StyleSheet.create({
   backBtnText: {
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  actionButton: {
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  primaryActionText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  actionIcon: {
+    marginRight: 8,
+  },
+  deleteButton: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  deleteActionText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  resolvedNotice: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    marginBottom: 12,
+    gap: 8,
+  },
+  resolvedNoticeText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
 });

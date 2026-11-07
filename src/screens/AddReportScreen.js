@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,8 +8,10 @@ import {
   ScrollView,
   Image,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
@@ -18,32 +20,50 @@ import {
   getClayCardStyle,
   getClayInputStyle,
   getClayButtonStyle,
+  getClayPillStyle,
 } from '../styles/theme';
+import { ITEM_CATEGORIES } from '../constants/itemCategories';
 
 export default function AddReportScreen({ route, navigation }) {
   const { theme, isDark } = useTheme();
   const { user } = useUser();
 
-  const [type, setType] = useState(route.params?.type || 'Lost');
+  const [type, setType] = useState('Lost');
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
-  const [contact, setContact] = useState(user.phone || user.email || '');
+  const [contact, setContact] = useState('');
   const [description, setDescription] = useState('');
-  const [imageUri, setImageUri] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+  const [category, setCategory] = useState('');
 
-  // Update type whenever screen receives new params
-  useEffect(() => {
-    if (route.params?.type) {
-      setType(route.params.type);
-    }
-  }, [route.params?.type]);
+  const resetForm = useCallback(() => {
+    setType(route.params?.type || 'Lost');
+    setTitle('');
+    setLocation('');
+    setContact(user.phone || user.email || '');
+    setDescription('');
+    setImageUri(null);
+    setCategory('');
+  }, [route.params?.type, user.email, user.phone]);
+
+  useFocusEffect(
+    useCallback(() => {
+      resetForm();
+      return resetForm;
+    }, [resetForm])
+  );
 
   const pickImage = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert('Permission Denied', 'Camera roll permission is required to add photos.');
-        return;
+      if (Platform.OS !== 'web') {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permissionResult.granted) {
+          const guidance = permissionResult.canAskAgain
+            ? 'Allow photo library access to attach an image to your report.'
+            : 'Photo library access is disabled. Enable it in your device settings to attach an image.';
+          Alert.alert('Photo Library Access Needed', guidance);
+          return;
+        }
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -53,16 +73,50 @@ export default function AddReportScreen({ route, navigation }) {
         quality: 0.7,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
+      if (!result.canceled && result.assets?.[0]?.uri) {
         setImageUri(result.assets[0].uri);
       }
     } catch (err) {
-      console.log('Error picking image:', err);
-      Alert.alert('Error', 'Could not open image library.');
+      console.log('Error selecting report image:', err);
+      Alert.alert('Unable to Choose Image', 'The photo library could not be opened. Please try again.');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permissionResult.granted) {
+          const guidance = permissionResult.canAskAgain
+            ? 'Allow camera access to take a photo for your report.'
+            : 'Camera access is disabled. Enable it in your device settings to take a photo.';
+          Alert.alert('Camera Access Needed', guidance);
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.log('Error capturing report image:', err);
+      Alert.alert('Unable to Take Photo', 'The camera could not be opened. Please try again.');
     }
   };
 
   const handleSave = () => {
+    if (!category) {
+      Alert.alert('Required Field', 'Please select an item category.');
+      return;
+    }
+
     if (!title.trim() || !location.trim() || !contact.trim()) {
       Alert.alert('Required Fields', 'Please fill in Item Name, Location, and Contact info.');
       return;
@@ -72,6 +126,7 @@ export default function AddReportScreen({ route, navigation }) {
       title: title.trim(),
       location: location.trim(),
       type,
+      category,
       contact: contact.trim(),
       description: description.trim(),
       imageUri,
@@ -90,7 +145,7 @@ export default function AddReportScreen({ route, navigation }) {
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.contentContainer}
     >
-      <Text style={[styles.heading, { color: theme.textPrimary }]}>
+      <Text style={[styles.heading, theme.typography.h1, { color: theme.textPrimary }]}>
         Report {type} Item
       </Text>
 
@@ -153,6 +208,43 @@ export default function AddReportScreen({ route, navigation }) {
           onChangeText={setTitle}
         />
 
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Category *</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryRow}
+        >
+          {ITEM_CATEGORIES.map((itemCategory) => {
+            const isSelected = category === itemCategory;
+            return (
+              <TouchableOpacity
+                key={itemCategory}
+                style={[
+                  styles.categoryPill,
+                  getClayPillStyle(
+                    isDark,
+                    isSelected ? theme.primary : theme.surface,
+                    isSelected
+                  ),
+                ]}
+                onPress={() => setCategory(itemCategory)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+              >
+                <Text
+                  style={[
+                    styles.categoryPillText,
+                    { color: isSelected ? '#FFFFFF' : theme.textSecondary },
+                  ]}
+                >
+                  {itemCategory}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
         {/* Location */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Location *</Text>
         <TextInput
@@ -190,35 +282,49 @@ export default function AddReportScreen({ route, navigation }) {
         </Text>
 
         {imageUri ? (
-          <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+          <View style={[getClayCardStyle(isDark), styles.imagePreviewContainer]}>
+            <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="cover" />
             <TouchableOpacity
-              style={styles.removeImageBtn}
-              onPress={() => setImageUri('')}
+              style={[styles.removeImageBtn, { backgroundColor: theme.danger }]}
+              onPress={() => setImageUri(null)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Remove selected photo"
             >
-              <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
-              <Text style={styles.removeImageText}>Remove Photo</Text>
+              <Ionicons name="close" size={16} color="#FFFFFF" />
+              <Text style={styles.removeImageText}>Remove</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[
-              styles.uploadBox,
-              clayInput,
-              { borderStyle: 'dashed', borderWidth: 1.8, borderColor: theme.primary },
-            ]}
-            activeOpacity={0.7}
-            onPress={pickImage}
-          >
-            <Ionicons name="camera-outline" size={32} color={theme.primary} />
-            <Text style={[styles.uploadTitle, { color: theme.primary }]}>
-              Attach a Photo
-            </Text>
+          <View style={[styles.photoPlaceholder, clayInput, { borderColor: theme.primary }]}>
+            <Ionicons name="image-outline" size={30} color={theme.primary} />
+            <Text style={[styles.uploadTitle, { color: theme.primary }]}>Add an item photo</Text>
             <Text style={[styles.uploadSubtitle, { color: theme.textSecondary }]}>
-              Helps others quickly identify the item
+              Take a new photo or choose one from your library.
             </Text>
-          </TouchableOpacity>
+          </View>
         )}
+
+        <View style={styles.photoActions}>
+          <TouchableOpacity
+            style={[styles.photoActionButton, getClayButtonStyle(isDark, theme.primary)]}
+            activeOpacity={0.85}
+            onPress={takePhoto}
+            accessibilityRole="button"
+          >
+            <Ionicons name="camera-outline" size={20} color="#FFFFFF" style={styles.photoActionIcon} />
+            <Text style={styles.photoActionText}>Take Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.photoActionButton, getClayButtonStyle(isDark, theme.surface)]}
+            activeOpacity={0.85}
+            onPress={pickImage}
+            accessibilityRole="button"
+          >
+            <Ionicons name="images-outline" size={20} color={theme.primary} style={styles.photoActionIcon} />
+            <Text style={[styles.photoActionText, { color: theme.primary }]}>Choose from Gallery</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Clay Submit Button */}
         <TouchableOpacity
@@ -267,6 +373,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 2,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  categoryPill: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
   card: {
     padding: 20,
   },
@@ -283,11 +404,31 @@ const styles = StyleSheet.create({
     height: 85,
     textAlignVertical: 'top',
   },
-  uploadBox: {
+  photoPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 22,
+    paddingVertical: 20,
     marginTop: 4,
+    marginBottom: 10,
+    borderStyle: 'dashed',
+    borderWidth: 1.8,
+  },
+  photoActions: {
+    gap: 10,
+  },
+  photoActionButton: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoActionIcon: {
+    marginRight: 8,
+  },
+  photoActionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
   },
   uploadTitle: {
     fontSize: 15,
@@ -299,28 +440,29 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   imagePreviewContainer: {
-    marginTop: 6,
-    borderRadius: 18,
+    marginTop: 4,
+    marginBottom: 10,
+    borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
+    padding: 0,
   },
   imagePreview: {
     width: '100%',
     height: 190,
-    borderRadius: 18,
+    borderRadius: 16,
     backgroundColor: '#E2E8F0',
   },
   removeImageBtn: {
     position: 'absolute',
-    bottom: 12,
+    top: 10,
     right: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(239, 68, 68, 0.92)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 16,
   },
   removeImageText: {
     color: '#FFFFFF',

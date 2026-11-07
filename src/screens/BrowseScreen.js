@@ -1,47 +1,68 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { getItems } from '../database/db';
+import { getActiveItems, getActiveItemsByCategory } from '../database/db';
 import {
   getClayCardStyle,
   getClayPillStyle,
   getClayBadgeStyle,
 } from '../styles/theme';
+import { ITEM_CATEGORIES } from '../constants/itemCategories';
 
 export default function BrowseScreen({ route, navigation }) {
   const { theme, isDark } = useTheme();
   const [filter, setFilter] = useState(route.params?.initialFilter || 'All');
+  const [categoryFilter, setCategoryFilter] = useState(route.params?.categoryFilter || 'All');
   const [search, setSearch] = useState('');
   const [items, setItems] = useState([]);
 
+  useEffect(() => {
+    if (route.params?.categoryFilter) {
+      setCategoryFilter(route.params.categoryFilter);
+    }
+  }, [route.params?.categoryFilter]);
+
   useFocusEffect(
     useCallback(() => {
-      setItems(getItems());
-    }, [])
+      try {
+        setItems(
+          categoryFilter === 'All'
+            ? getActiveItems()
+            : getActiveItemsByCategory(categoryFilter)
+        );
+      } catch (error) {
+        console.log('Error loading browse items:', error);
+        setItems([]);
+      }
+    }, [categoryFilter])
   );
 
   const displayedItems = items.filter((item) => {
+    if (String(item.status || 'active').toLowerCase() !== 'active') return false;
     const matchesFilter =
       filter === 'All' || item.type?.toLowerCase() === filter.toLowerCase();
+    const matchesCategory =
+      categoryFilter === 'All' || item.category === categoryFilter;
     const q = search.toLowerCase().trim();
-    if (!q) return matchesFilter;
+    if (!q) return matchesFilter && matchesCategory;
 
     const matchesSearch =
       (item.title && item.title.toLowerCase().includes(q)) ||
       (item.location && item.location.toLowerCase().includes(q)) ||
       (item.description && item.description.toLowerCase().includes(q));
 
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesCategory && matchesSearch;
   });
 
   const clayCard = getClayCardStyle(isDark);
@@ -69,6 +90,45 @@ export default function BrowseScreen({ route, navigation }) {
             <Ionicons name="close-circle" size={18} color={theme.textSecondary} />
           </TouchableOpacity>
         )}
+      </View>
+
+      <View style={styles.categoryFilters}>
+        <Text style={[styles.categoryFilterLabel, { color: theme.textSecondary }]}>CATEGORY</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryFilterRow}
+        >
+          {['All', ...ITEM_CATEGORIES].map((category) => {
+            const isActive = categoryFilter === category;
+            return (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryFilterPill,
+                  getClayPillStyle(
+                    isDark,
+                    isActive ? theme.primary : theme.surface,
+                    isActive
+                  ),
+                ]}
+                onPress={() => setCategoryFilter(category)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+              >
+                <Text
+                  style={[
+                    styles.categoryFilterText,
+                    { color: isActive ? '#FFFFFF' : theme.textSecondary },
+                  ]}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {/* Clay Filter Tabs */}
@@ -195,6 +255,30 @@ const styles = StyleSheet.create({
   },
   clearBtn: {
     padding: 4,
+  },
+  categoryFilters: {
+    marginTop: 4,
+  },
+  categoryFilterLabel: {
+    marginHorizontal: 18,
+    marginBottom: 2,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  categoryFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  categoryFilterPill: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryFilterText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   filterRow: {
     flexDirection: 'row',

@@ -22,9 +22,9 @@ import {
 const CATEGORIES = [
   { name: 'Electronics', icon: 'phone-portrait-outline' },
   { name: 'Keys', icon: 'key-outline' },
-  { name: 'Wallets & Bags', icon: 'wallet-outline' },
+  { name: 'IDs & Cards', icon: 'card-outline' },
+  { name: 'Bags & Wallets', icon: 'wallet-outline' },
   { name: 'Clothing', icon: 'shirt-outline' },
-  { name: 'Documents', icon: 'document-text-outline' },
   { name: 'Other', icon: 'cube-outline' },
 ];
 
@@ -72,10 +72,10 @@ export default function HomeScreen({ navigation }) {
     >
       {/* 1. Welcoming User Greeting */}
       <View style={styles.greetingHeader}>
-        <Text style={[styles.greetingSub, { color: theme.textSecondary }]}>
+        <Text style={[styles.greetingSub, theme.typography.subtitle, { color: theme.textSecondary }]}>
           Welcome back,
         </Text>
-        <Text style={[styles.greetingName, { color: theme.textPrimary }]}>
+        <Text style={[styles.greetingName, theme.typography.h1, { color: theme.textPrimary }]}>
           {user.name || 'Friend'} 
         </Text>
       </View>
@@ -88,8 +88,8 @@ export default function HomeScreen({ navigation }) {
           { borderBottomColor: isDark ? '#3730A3' : '#312E81' },
         ]}
       >
-        <Text style={styles.heroTitle}>Trust & Recover</Text>
-        <Text style={styles.heroSubtitle}>
+        <Text style={[styles.heroTitle, theme.typography.h1]}>Trust & Recover</Text>
+        <Text style={[styles.heroSubtitle, theme.typography.subtitle]}>
           Secure search and seamless recovery for campus lost and found.
         </Text>
 
@@ -122,7 +122,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* 4. Clay Quick Action Cards */}
-      <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Quick Actions</Text>
+      <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textPrimary }]}>Quick Actions</Text>
       <View style={styles.actionGrid}>
         {/* Report Lost Clay Card */}
         <TouchableOpacity
@@ -164,7 +164,7 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* 5. Clay Category Pills Row */}
-      <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Categories</Text>
+      <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textPrimary }]}>Categories</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -175,7 +175,7 @@ export default function HomeScreen({ navigation }) {
             key={cat.name}
             style={[styles.categoryChip, clayPill]}
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('Browse')}
+            onPress={() => navigation.navigate('Browse', { categoryFilter: cat.name })}
           >
             <Ionicons name={cat.icon} size={16} color={theme.primary} style={{ marginRight: 6 }} />
             <Text style={[styles.categoryText, { color: theme.textPrimary }]}>{cat.name}</Text>
@@ -185,7 +185,7 @@ export default function HomeScreen({ navigation }) {
 
       {/* 6. Recent Activity Section with Clay Cards */}
       <View style={styles.sectionHeaderRow}>
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Recent Activity</Text>
+        <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textPrimary }]}>Recent Activity</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Browse')}>
           <Text style={[styles.seeAllText, { color: theme.primary }]}>View All ({totalCount}) →</Text>
         </TouchableOpacity>
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: '600',
     marginBottom: 12,
     marginLeft: 4,
   },
