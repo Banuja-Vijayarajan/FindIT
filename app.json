@@ -21,7 +21,16 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FindIt uses your photo library to attach an item image to a report.",
+          "cameraPermission": "FindIt uses your camera to take a photo of an item for your report.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font"
     ]
   }
 }

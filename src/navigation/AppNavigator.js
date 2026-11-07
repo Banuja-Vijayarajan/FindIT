@@ -61,9 +61,12 @@ function MainTabs() {
     <Tab.Navigator
       initialRouteName="HomeTab"
       screenOptions={({ navigation }) => ({
-        headerStyle: { backgroundColor: theme.primary },
+        headerStyle: { backgroundColor: theme.primary, height: 76 },
         headerTintColor: '#FFFFFF',
-        headerTitleStyle: { fontWeight: '700' },
+        headerTitleStyle: {
+          fontFamily: theme.typography.subtitle.fontFamily,
+          fontWeight: '600',
+        },
         headerRight: () => <NavBarEdgeActions navigation={navigation} />,
         tabBarStyle: {
           backgroundColor: theme.surface,
@@ -82,13 +85,20 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           headerTitle: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, height: 64 }}>
               <Image
                 source={require('../../assets/FindIt_logo_mark.png')}
-                style={{ width: 26, height: 26, tintColor: '#FFFFFF' }}
+                style={{ width: 56, height: 56, tintColor: '#FFFFFF' }}
                 resizeMode="contain"
               />
-              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '800' }}>FindIt</Text>
+              <Text
+                style={[
+                  theme.typography.appTitle,
+                  { color: '#FFFFFF', fontSize: 22, fontWeight: '800' },
+                ]}
+              >
+                FindIt
+              </Text>
             </View>
           ),
           tabBarLabel: 'Home',
@@ -159,7 +169,10 @@ export default function AppNavigator() {
         screenOptions={({ navigation }) => ({
           headerStyle: { backgroundColor: theme.primary },
           headerTintColor: '#FFFFFF',
-          headerTitleStyle: { fontWeight: '700' },
+          headerTitleStyle: {
+            fontFamily: theme.typography.subtitle.fontFamily,
+            fontWeight: '600',
+          },
           contentStyle: { backgroundColor: theme.background },
           headerRight: () => <NavBarEdgeActions navigation={navigation} />,
         })}
