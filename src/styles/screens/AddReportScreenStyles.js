@@ -1,0 +1,27 @@
+import { StyleSheet } from 'react-native';
+
+export default StyleSheet.create({
+  container: { flex: 1 },
+  contentContainer: { padding: 16, paddingBottom: 40 },
+  heading: { fontSize: 22, fontWeight: '800', marginBottom: 16, textAlign: 'center' },
+  typeRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  typeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  typeBtnText: { fontSize: 14, fontWeight: '800' },
+  card: { padding: 20 },
+  label: { fontSize: 13, fontWeight: '700', marginBottom: 6, marginTop: 10 },
+  input: { marginBottom: 6 },
+  textArea: { height: 85, textAlignVertical: 'top' },
+  photoPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingVertical: 20, marginTop: 4, marginBottom: 10, borderStyle: 'dashed', borderWidth: 1.8 },
+  photoActions: { gap: 10 },
+  photoActionButton: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  photoActionIcon: { marginRight: 8 },
+  photoActionText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+  uploadTitle: { fontSize: 15, fontWeight: '800', marginTop: 6 },
+  uploadSubtitle: { fontSize: 12, marginTop: 2 },
+  imagePreviewContainer: { marginTop: 4, marginBottom: 10, borderRadius: 20, overflow: 'hidden', position: 'relative', padding: 0 },
+  imagePreview: { width: '100%', height: 190, borderRadius: 16, backgroundColor: '#E2E8F0' },
+  removeImageBtn: { position: 'absolute', top: 10, right: 12, flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16 },
+  removeImageText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  submitBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 26 },
+  submitBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+});

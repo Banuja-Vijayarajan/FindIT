@@ -1,11 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
-  Image,
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,10 +11,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import { getItems } from '../database/db';
+import CategoryPillList from '../components/CategoryPillList';
+import ItemSummary from '../components/ItemSummary';
+import styles from '../styles/screens/HomeScreenStyles';
 import {
   getClayCardStyle,
   getClayPillStyle,
-  getClayBadgeStyle,
 } from '../styles/theme';
 
 const CATEGORIES = [
@@ -62,7 +62,6 @@ export default function HomeScreen({ navigation }) {
 
   // Reusable Clay Card helper
   const clayCard = getClayCardStyle(isDark);
-  const clayPill = getClayPillStyle(isDark);
 
   return (
     <ScrollView
@@ -165,23 +164,14 @@ export default function HomeScreen({ navigation }) {
 
       {/* 5. Clay Category Pills Row */}
       <Text style={[styles.sectionTitle, theme.typography.subtitle, { color: theme.textHeading }]}>Categories</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+      <CategoryPillList
+        categories={CATEGORIES}
+        selected={null}
+        onSelect={(category) => navigation.navigate('Browse', { categoryFilter: category })}
+        theme={theme}
+        isDark={isDark}
         contentContainerStyle={styles.categoryScroll}
-      >
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.name}
-            style={[styles.categoryChip, clayPill]}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('Browse', { categoryFilter: cat.name })}
-          >
-            <Ionicons name={cat.icon} size={16} color={theme.primary} style={{ marginRight: 6 }} />
-            <Text style={[styles.categoryText, { color: theme.textPrimary }]}>{cat.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      />
 
       {/* 6. Recent Activity Section with Clay Cards */}
       <View style={styles.sectionHeaderRow}>
@@ -201,7 +191,6 @@ export default function HomeScreen({ navigation }) {
         </View>
       ) : (
         recentItems.map((item) => {
-          const isLost = item.type?.toLowerCase() === 'lost';
           return (
             <TouchableOpacity
               key={item.id.toString()}
@@ -209,50 +198,7 @@ export default function HomeScreen({ navigation }) {
               activeOpacity={0.8}
               onPress={() => navigation.navigate('ItemDetails', { item })}
             >
-              <View style={styles.itemRow}>
-                {item.imageUri ? (
-                  <Image source={{ uri: item.imageUri }} style={styles.itemThumb} />
-                ) : (
-                  <View style={[styles.itemThumbPlaceholder, { backgroundColor: isLost ? theme.accentBg : theme.successBg }]}>
-                    <Ionicons
-                      name={isLost ? 'search-outline' : 'gift-outline'}
-                      size={22}
-                      color={isLost ? theme.accent : theme.success}
-                    />
-                  </View>
-                )}
-
-                <View style={styles.itemDetails}>
-                  <View style={styles.itemHeader}>
-                    <Text style={[styles.itemTitle, { color: theme.textPrimary }]} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-
-                    {/* Clay Pill Status Badge */}
-                    <View style={getClayBadgeStyle(isDark, item.type)}>
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          { color: isLost ? theme.accent : theme.success },
-                        ]}
-                      >
-                        {isLost ? 'LOST' : 'FOUND'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={13} color={theme.textSecondary} style={{ marginRight: 4 }} />
-                    <Text style={[styles.itemLocation, { color: theme.textSecondary }]} numberOfLines={1}>
-                      {item.location}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.itemDesc, { color: theme.textSecondary }]} numberOfLines={1}>
-                    {item.description || 'No description provided.'}
-                  </Text>
-                </View>
-              </View>
+              <ItemSummary item={item} theme={theme} isDark={isDark} variant="home" />
             </TouchableOpacity>
           );
         })
@@ -296,234 +242,3 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  greetingHeader: {
-    marginBottom: 16,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  greetingSub: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  greetingName: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  heroCard: {
-    marginBottom: 18,
-  },
-  heroTitle: {
-    fontSize: 23,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    color: '#E0E7FF',
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  searchBarClay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  searchBarPlaceholder: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 22,
-  },
-  statBox: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 22,
-  },
-  actionCard: {
-    flex: 1,
-  },
-  actionIconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  actionDesc: {
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  categoryScroll: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingBottom: 8,
-    marginBottom: 20,
-    paddingLeft: 2,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingRight: 4,
-  },
-  seeAllText: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  itemCard: {
-    marginBottom: 12,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  itemThumb: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: '#CBD5E1',
-  },
-  itemThumbPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemDetails: {
-    flex: 1,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  itemTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    flex: 1,
-    marginRight: 6,
-  },
-  badgeText: {
-    fontWeight: '800',
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  itemLocation: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  itemDesc: {
-    fontSize: 12,
-  },
-  emptyCard: {
-    padding: 28,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  emptyDesc: {
-    fontSize: 13,
-  },
-  myReportsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  myReportsLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  myReportsIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  myReportsTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  myReportsSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  tipCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  tipBold: {
-    fontWeight: '800',
-  },
-});

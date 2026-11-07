@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TextInput,
@@ -16,11 +15,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import { addItem } from '../database/db';
+import CategoryPillList from '../components/CategoryPillList';
+import styles from '../styles/screens/AddReportScreenStyles';
 import {
   getClayCardStyle,
   getClayInputStyle,
   getClayButtonStyle,
-  getClayPillStyle,
 } from '../styles/theme';
 import { ITEM_CATEGORIES } from '../constants/itemCategories';
 
@@ -209,41 +209,13 @@ export default function AddReportScreen({ route, navigation }) {
         />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Category *</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryRow}
-        >
-          {ITEM_CATEGORIES.map((itemCategory) => {
-            const isSelected = category === itemCategory;
-            return (
-              <TouchableOpacity
-                key={itemCategory}
-                style={[
-                  styles.categoryPill,
-                  getClayPillStyle(
-                    isDark,
-                    isSelected ? theme.primary : theme.surface,
-                    isSelected
-                  ),
-                ]}
-                onPress={() => setCategory(itemCategory)}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-              >
-                <Text
-                  style={[
-                    styles.categoryPillText,
-                    { color: isSelected ? '#FFFFFF' : theme.textSecondary },
-                  ]}
-                >
-                  {itemCategory}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        <CategoryPillList
+          categories={ITEM_CATEGORIES}
+          selected={category}
+          onSelect={setCategory}
+          theme={theme}
+          isDark={isDark}
+        />
 
         {/* Location */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Location *</Text>
@@ -343,141 +315,3 @@ export default function AddReportScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  typeRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  typeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  typeBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 2,
-    paddingVertical: 6,
-    marginBottom: 8,
-  },
-  categoryPill: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryPillText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  card: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 6,
-    marginTop: 10,
-  },
-  input: {
-    marginBottom: 6,
-  },
-  textArea: {
-    height: 85,
-    textAlignVertical: 'top',
-  },
-  photoPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    marginTop: 4,
-    marginBottom: 10,
-    borderStyle: 'dashed',
-    borderWidth: 1.8,
-  },
-  photoActions: {
-    gap: 10,
-  },
-  photoActionButton: {
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoActionIcon: {
-    marginRight: 8,
-  },
-  photoActionText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  uploadTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    marginTop: 6,
-  },
-  uploadSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  imagePreviewContainer: {
-    marginTop: 4,
-    marginBottom: 10,
-    borderRadius: 20,
-    overflow: 'hidden',
-    position: 'relative',
-    padding: 0,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 190,
-    borderRadius: 16,
-    backgroundColor: '#E2E8F0',
-  },
-  removeImageBtn: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 16,
-  },
-  removeImageText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  submitBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 26,
-  },
-  submitBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-});
