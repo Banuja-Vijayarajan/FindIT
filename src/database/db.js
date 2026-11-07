@@ -23,6 +23,7 @@ let items = [
     category: 'Bottle',
     date: new Date().toISOString().split('T')[0],
     imageUri: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&q=80',
+    status: 'active',
   },
   {
     id: 2,
@@ -34,10 +35,11 @@ let items = [
     category: 'Keys',
     date: new Date().toISOString().split('T')[0],
     imageUri: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&q=80',
+    status: 'active',
   },
 ];
 
-// Create table if it does not exist & ensure imageUri column exists
+// Create table if it does not exist and migrate columns from earlier versions
 export const initDatabase = () => {
   if (Platform.OS === 'web' || !db) return;
   try {
@@ -51,7 +53,8 @@ export const initDatabase = () => {
         description TEXT,
         category TEXT,
         date TEXT,
-        imageUri TEXT
+        imageUri TEXT,
+        status TEXT NOT NULL DEFAULT 'active'
       );
     `);
 
@@ -63,13 +66,14 @@ export const initDatabase = () => {
     try { db.execSync('ALTER TABLE items ADD COLUMN location TEXT;'); } catch (_) {}
     try { db.execSync('ALTER TABLE items ADD COLUMN type TEXT;'); } catch (_) {}
     try { db.execSync('ALTER TABLE items ADD COLUMN imageUri TEXT;'); } catch (_) {}
+    try { db.execSync("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'active';"); } catch (_) {}
 
     // Add initial samples if table is empty
     const check = db.getFirstSync('SELECT COUNT(*) as count FROM items');
     if (check && check.count === 0) {
       for (const item of items) {
         db.runSync(
-          'INSERT INTO items (title, location, type, contact, description, category, date, imageUri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO items (title, location, type, contact, description, category, date, imageUri, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             item.title,
             item.location,
@@ -79,6 +83,7 @@ export const initDatabase = () => {
             item.category || 'General',
             item.date || '',
             item.imageUri || '',
+            item.status || 'active',
           ]
         );
       }
@@ -98,6 +103,40 @@ export const getItems = () => {
   }
 };
 
+// Get only reports that are still active
+export const getActiveItems = () => {
+  if (Platform.OS === 'web' || !db) {
+    return items.filter((item) => String(item.status || 'active').toLowerCase() === 'active');
+  }
+  try {
+    return db.getAllSync("SELECT * FROM items WHERE status = 'active' ORDER BY id DESC");
+  } catch (e) {
+    console.log('Error loading active items:', e);
+    return items.filter((item) => String(item.status || 'active').toLowerCase() === 'active');
+  }
+};
+
+// Get active reports for a selected category
+export const getActiveItemsByCategory = (category) => {
+  if (!category || category === 'All') return getActiveItems();
+  if (Platform.OS === 'web' || !db) {
+    return items.filter(
+      (item) => String(item.status || 'active').toLowerCase() === 'active' && item.category === category
+    );
+  }
+  try {
+    return db.getAllSync(
+      "SELECT * FROM items WHERE status = 'active' AND category = ? ORDER BY id DESC",
+      [category]
+    );
+  } catch (e) {
+    console.log('Error loading active items by category:', e);
+    return items.filter(
+      (item) => String(item.status || 'active').toLowerCase() === 'active' && item.category === category
+    );
+  }
+};
+
 // Add a new report
 export const addItem = (newItem) => {
   const currentDate = new Date().toISOString().split('T')[0];
@@ -110,11 +149,12 @@ export const addItem = (newItem) => {
       title: newItem.title,
       location: newItem.location,
       type: itemType,
+      category: newItem.category || 'General',
       contact: newItem.contact,
       description: newItem.description || '',
-      category: newItem.category || 'General',
       date: currentDate,
       imageUri: itemImage,
+      status: 'active',
     };
     items = [item, ...items];
     return item;
@@ -122,7 +162,7 @@ export const addItem = (newItem) => {
 
   try {
     db.runSync(
-      'INSERT INTO items (title, location, type, contact, description, category, date, imageUri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO items (title, location, type, contact, description, category, date, imageUri, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         newItem.title,
         newItem.location,
@@ -132,14 +172,15 @@ export const addItem = (newItem) => {
         newItem.category || 'General',
         currentDate,
         itemImage,
+        'active',
       ]
     );
   } catch (e) {
     console.log('Insert error, trying fallback query:', e);
     try {
       db.runSync(
-        'INSERT INTO items (title, location, type, contact, description) VALUES (?, ?, ?, ?, ?)',
-        [newItem.title, newItem.location, itemType, newItem.contact, newItem.description || '']
+        "INSERT INTO items (title, location, type, contact, description, category, status) VALUES (?, ?, ?, ?, ?, ?, 'active')",
+        [newItem.title, newItem.location, itemType, newItem.contact, newItem.description || '', newItem.category || 'General']
       );
     } catch (err) {
       console.log('Final fallback failed:', err);
@@ -150,12 +191,38 @@ export const addItem = (newItem) => {
 // Delete a report by ID
 export const deleteItem = (id) => {
   if (Platform.OS === 'web' || !db) {
-    items = items.filter((item) => item.id !== id);
-    return;
+    const previousCount = items.length;
+    items = items.filter((item) => String(item.id) !== String(id));
+    return items.length < previousCount;
   }
   try {
-    db.runSync('DELETE FROM items WHERE id = ?', [id]);
+    const result = db.runSync('DELETE FROM items WHERE id = ?', [id]);
+    return result.changes > 0;
   } catch (e) {
     console.log('Error deleting item:', e);
+    return false;
   }
 };
+
+const updateItemStatus = (id, status) => {
+  if (Platform.OS === 'web' || !db) {
+    const item = items.find((entry) => String(entry.id) === String(id));
+    if (!item) return false;
+    item.status = status;
+    return true;
+  }
+
+  try {
+    const result = db.runSync('UPDATE items SET status = ? WHERE id = ?', [status, id]);
+    return result.changes > 0;
+  } catch (e) {
+    console.log('Error updating item status:', e);
+    return false;
+  }
+};
+
+// Mark an item as claimed/returned and hide it from active browse lists
+export const markItemAsClaimed = (id) => updateItemStatus(id, 'claimed');
+
+// Retained for callers that use the resolved status label
+export const markItemAsResolved = (id) => updateItemStatus(id, 'resolved');
