@@ -85,7 +85,7 @@ export default function HomeScreen({ navigation }) {
         style={[
           styles.heroCard,
           getClayCardStyle(isDark, theme.primary),
-          { borderBottomColor: isDark ? '#3730A3' : '#312E81' },
+          { borderBottomColor: theme.textHeading },
         ]}
       >
         <Text style={[styles.heroTitle, theme.typography.h1]}>Trust & Recover</Text>
