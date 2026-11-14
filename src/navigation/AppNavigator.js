@@ -98,7 +98,7 @@ function MainTabs() {
                   { color: theme.textHeading, fontSize: 22, fontWeight: '800' },
                 ]}
               >
-                FindIt
+                FindIT
               </Text>
             </View>
           ),

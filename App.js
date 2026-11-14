@@ -42,7 +42,7 @@ export default function App() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={styles.loadingText}>Loading FindIt...</Text>
+        <Text style={styles.loadingText}>Loading FindIT...</Text>
       </View>
     );
   }
